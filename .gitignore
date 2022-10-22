@@ -396,3 +396,9 @@ Temporary Items
 # Local
 .env
 dist
+*.tfstate
+*.tfstate.*
+*.hcl
+volume/*
+iac/.terraform/
+

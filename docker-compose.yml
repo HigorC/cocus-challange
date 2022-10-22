@@ -7,7 +7,7 @@ services:
       - "4566:4566"
     environment:
       - DEBUG=1
-      - SERVICES=lambda,s3,dynamodb
+      - SERVICES=dynamodb
       - LOCALSTACK_HOSTNAME=localhost
       - DOCKER_HOST=unix:///var/run/docker.sock
     volumes:

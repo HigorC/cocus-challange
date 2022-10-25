@@ -176,6 +176,18 @@ describe('UserController (e2e)', () => {
           .expect(200)
           .expect(mockedUser.Trips)
       })
+
+      it('Get all trips with params', async () => {
+        mockGetDynamoose.mockResolvedValueOnce(mockedUser)
+
+        const lookedTrip = mockedUser.Trips[1]
+
+        return request(app.getHttpServer())
+          .get(`/users/${mockedUser.Username}/trips?origin=${lookedTrip.OriginCity}&destination=${lookedTrip.DestinationCity}&date=${lookedTrip.Date}`)
+          .set('Authorization', `bearer ${fakeToken}`)
+          .expect(200)
+          .expect([lookedTrip])
+      })
     })
 
     describe('PUT /users/:userId/trips/:tripId', () => {

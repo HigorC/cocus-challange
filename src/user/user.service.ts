@@ -72,9 +72,23 @@ export class UserService {
     return undefined
   }
 
-  async findAllTrips(username: string): Promise<Trip[] | undefined> {
+  async findAllTrips(username: string, origin?: string, destination?: string, date?: string): Promise<Trip[] | undefined> {
     const user = await this.findOne(username)
-    return user.Trips
+
+    const filteredTrips = user.Trips && user.Trips.filter((trip) => {
+      if (origin && trip.OriginCity !== origin) {
+        return false
+      }
+      if (destination && trip.DestinationCity !== destination) {
+        return false
+      } 
+      if (date && trip.Date !== date) {
+        return false
+      }
+      return true
+    })
+
+    return filteredTrips
   }
 
   async addPeopleIntoTrip(username: string, tripId: string, updateTripDTO: updateTripDTO) {

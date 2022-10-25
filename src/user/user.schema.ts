@@ -13,7 +13,7 @@ export const UserSchema = new dynamoose.Schema(
             schema: [{
                 type: Object,
                 schema: {
-                    TripId: {
+                    TripID: {
                         required: true,
                         type: String,
                     },

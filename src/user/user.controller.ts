@@ -1,4 +1,4 @@
-import { Controller, Request, Post, UseGuards, Body, Get, Param, Put, Delete, HttpException, HttpStatus } from '@nestjs/common';
+import { Controller, Request, Post, UseGuards, Body, Get, Param, Put, Delete, HttpException, HttpStatus, Query } from '@nestjs/common';
 
 import { AuthService } from '../auth/auth.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -46,8 +46,13 @@ export class UserController {
 
   @UseGuards(JwtAuthGuard)
   @Get("/:userId/trips")
-  async getAllTrip(@Param() params): Promise<Object> {
-    return this.userService.findAllTrips(params.userId)
+  async getAllTrip(
+    @Param() params,
+    @Query('origin') origin,
+    @Query('destination') destination,
+    @Query('date') date
+  ): Promise<Object> {
+    return this.userService.findAllTrips(params.userId, origin, destination, date)
   }
 
   @UseGuards(JwtAuthGuard)

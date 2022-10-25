@@ -18,6 +18,13 @@ export class UserService {
 
   constructor(@Inject("EncrypterInterface") private encrypter: EncrypterInterface) { }
 
+  /**
+   * Creates a new user, if it's doesn't exists.
+   * 
+   * @param createUserDTO new user information
+   * @param traceID
+   * @returns created user
+   */
   async createUser(createUserDTO: createUserDTO, traceID: string) {
     const user = await this.findUser(createUserDTO.Username, traceID);
 
@@ -33,6 +40,13 @@ export class UserService {
     });
   }
 
+  /**
+   * Try to find a user.
+   *
+   * @param username searched username
+   * @param traceID 
+   * @returns user, if founded
+   */
   async findUser(username: string, traceID: string): Promise<User> {
     this.logger.log({ traceID,username, message: `Getting the user [${username}]` })
 
@@ -45,15 +59,31 @@ export class UserService {
     return user
   }
 
-  async validateUser(username: string, pass: string, traceID: string): Promise<boolean> {
+  /**
+   * Check if a passed string is the same as the saved password.
+   *
+   * @param username
+   * @param password 
+   * @param traceID 
+   * @returns boolean
+   */
+  async validateUser(username: string, password: string, traceID: string): Promise<boolean> {
     const user = await this.findUser(username, traceID);
 
     if (user) {
-      return this.encrypter.validate(pass, user.Password, traceID)
+      return this.encrypter.validate(password, user.Password, traceID)
     }
     return false
   }
 
+  /**
+   * Create a new trip to a specific user.
+   *
+   * @param username 
+   * @param createTripDTO trip information
+   * @param traceID 
+   * @returns the uploaded user
+   */
   async createTrip(username: string, createTripDTO: createTripDTO, traceID: string): Promise<User> {
     this.logger.log({ traceID, username, message: `Creating trip` })
 
@@ -75,6 +105,14 @@ export class UserService {
     return this.dbInstance.update(user);
   }
 
+  /**
+   * Try to find a trip of a specific user.
+   *
+   * @param username 
+   * @param tripId searched tripID
+   * @param traceID 
+   * @returns Trip, if founded
+   */
   async findOneTrip(username, tripId: string, traceID: string): Promise<Trip | undefined> {
     const defaultLog = {
       traceID,
@@ -94,6 +132,17 @@ export class UserService {
     throw new HttpException('Trip not found', HttpStatus.NOT_FOUND)
   }
 
+  /**
+   * Returns all trip's of a specific user.
+   * Trips could be filtered by some parameters: origin,destination and date.
+   *
+   * @param username 
+   * @param traceID 
+   * @param origin param to filter
+   * @param destination param to filter
+   * @param date param to filter
+   * @returns Trips founded with the passed params
+   */
   async findAllTrips(username: string, traceID: string, origin?: string, destination?: string, date?: string): Promise<Trip[] | undefined> {
     this.logger.log({ traceID, username, message: `Finding all trips for the user [${username}]` })
 
@@ -115,6 +164,15 @@ export class UserService {
     return filteredTrips
   }
 
+  /**
+   * Add a list of people in a specific trip.
+   *
+   * @param username 
+   * @param tripId TripID to add the new people
+   * @param updateTripDTO new people names
+   * @param traceID 
+   * @returns 
+   */
   async addPeopleIntoTrip(username: string, tripId: string, updateTripDTO: updateTripDTO, traceID: string) {
     const defaultLog = {
       traceID,
@@ -140,8 +198,17 @@ export class UserService {
       this.logger.log({ ...defaultLog, message: `Trip not found` })
       throw new HttpException('Trip not found', HttpStatus.NOT_FOUND)
     }
+    throw new HttpException('This user doesnt have any Trip', HttpStatus.NOT_FOUND)
   }
 
+  /**
+   * Remove a specific trip of a specific user
+   *
+   * @param username 
+   * @param tripId TripID to be removed
+   * @param traceID 
+   * @returns uploaded list of trips
+   */
   async removeTrip(username: string, tripId: string, traceID: string): Promise<Trip[]> {
     const defaultLog = {
       traceID,

@@ -1,4 +1,4 @@
-import { Controller, Request, Post, UseGuards, Body, Get, Param, Put, Delete, HttpException, HttpStatus, Query } from '@nestjs/common';
+import { Controller, Request, Post, UseGuards, Body, Get, Param, Put, Delete, HttpException, HttpStatus, Query, Res, Req } from '@nestjs/common';
 
 import { AuthService } from '../auth/auth.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -14,12 +14,12 @@ export class UserController {
   @UseGuards(LocalAuthGuard)
   @Post('auth/login')
   async login(@Request() req) {
-    return this.authService.login(req.user);
+    return this.authService.login(req.user, req.generatedTraceID);
   }
 
   @Post()
-  async saveUser(@Body() createUserDTO) {
-    const user = await this.userService.create(createUserDTO)
+  async saveUser(@Req() req, @Body() createUserDTO) {
+    const user = await this.userService.createUser(createUserDTO, req.generatedTraceID)
     if (user) {
       return `User ${user.Username} created successufuly`
     }
@@ -28,36 +28,41 @@ export class UserController {
 
   @UseGuards(JwtAuthGuard)
   @Post('/:userId/trips')
-  saveTrip(@Body() createTripDTO: createTripDTO, @Param() params) {
-    return this.userService.createTrip(params.userId, createTripDTO)
+  saveTrip(@Req() req, @Body() createTripDTO: createTripDTO, @Param() params) {
+    return this.userService.createTrip(params.userId, createTripDTO, req.generatedTraceID)
   }
 
   @UseGuards(JwtAuthGuard)
   @Get("/:userId/trips/:tripId")
-  async getTrip(@Param() params): Promise<Object> {
-    return this.userService.findOneTrip(params.userId, params.tripId)
+  async getTrip(@Req() req, @Param() params): Promise<Object> {
+    return this.userService.findOneTrip(params.userId, params.tripId, req.generatedTraceID)
   }
 
   @UseGuards(JwtAuthGuard)
   @Put("/:userId/trips/:tripId")
-  async addPeopleIntoTrip(@Param() params, @Body() newPeople: updateTripDTO): Promise<Object> {
-    return this.userService.addPeopleIntoTrip(params.userId, params.tripId, newPeople)
+  async addPeopleIntoTrip(
+    @Req() req,
+    @Param() params,
+    @Body() newPeople: updateTripDTO
+  ): Promise<Object> {
+    return this.userService.addPeopleIntoTrip(params.userId, params.tripId, newPeople, req.generatedTraceID)
   }
 
   @UseGuards(JwtAuthGuard)
   @Get("/:userId/trips")
   async getAllTrip(
+    @Req() req,
     @Param() params,
     @Query('origin') origin,
     @Query('destination') destination,
-    @Query('date') date
+    @Query('date') date,
   ): Promise<Object> {
-    return this.userService.findAllTrips(params.userId, origin, destination, date)
+    return this.userService.findAllTrips(params.userId, req.generatedTraceID, origin, destination, date)
   }
 
   @UseGuards(JwtAuthGuard)
   @Delete("/:userId/trips/:tripId")
-  async remove(@Param() params) {
-    return this.userService.removeTrip(params.userId, params.tripId)
+  async remove(@Req() req, @Param() params) {
+    return this.userService.removeTrip(params.userId, params.tripId, req.generatedTraceID)
   }
 }

@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { AuthModule } from './auth/auth.module';
 import { AuthService } from './auth/auth.service';
 import { JwtStrategy } from './auth/jwt.strategy';
@@ -8,6 +8,8 @@ import { JwtModule } from '@nestjs/jwt';
 import { UserService } from './user/user.service';
 import { CommonModule } from './common/common.module';
 import { EncrypterBcrypt } from './common/encrypter-bcrypt';
+import { logger } from './common/logger.middleware';
+import { UserController } from './user/user.controller';
 
 @Module({
   imports: [
@@ -30,4 +32,8 @@ import { EncrypterBcrypt } from './common/encrypter-bcrypt';
     }
   ]
 })
-export class AppModule { }
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(logger).forRoutes(UserController)
+  }
+}

@@ -1,27 +1,31 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
 
-import { Model } from 'dynamoose/dist/Model';
 import { UserSchema } from './user.schema';
 import { createUserDTO } from './dto/createUser.dto';
 import { createTripDTO } from './dto/createTrip.dto';
 import { Trip, User } from './user.entity';
 import { updateTripDTO } from './dto/updateTrip.dto';
+import { EncrypterInterface } from '../common/encrypter.interface';
 
 import { v4 as uuidv4 } from 'uuid';
 import * as dynamoose from 'dynamoose'
-import { EncrypterInterface } from '../common/encrypter.interface';
 
 @Injectable()
 export class UserService {
-  private dbInstance: Model<User>;
+  private readonly tableName = 'users';
+  private dbInstance = dynamoose.model<User>(this.tableName, UserSchema);
+  private readonly logger = new Logger(UserService.name);
 
-  constructor(@Inject("EncrypterInterface") private encrypter: EncrypterInterface) {
-    const tableName = 'users';
-    this.dbInstance = dynamoose.model<User>(tableName, UserSchema);
-  }
+  constructor(@Inject("EncrypterInterface") private encrypter: EncrypterInterface) { }
 
-  async create(createUserDTO: createUserDTO) {
-    const hash  = await this.encrypter.encrypt(createUserDTO.Password)
+  async createUser(createUserDTO: createUserDTO, traceID: string) {
+    const user = await this.findUser(createUserDTO.Username, traceID);
+
+    if (user) {
+      throw new HttpException('Username already in use! Please choose another one.', HttpStatus.BAD_REQUEST)
+    }
+
+    const hash = await this.encrypter.encrypt(createUserDTO.Password, traceID)
 
     return this.dbInstance.create({
       Username: createUserDTO.Username,
@@ -29,20 +33,30 @@ export class UserService {
     });
   }
 
-  async findOne(username: string): Promise<User> {
-    return this.dbInstance.get({ Username: username });
+  async findUser(username: string, traceID: string): Promise<User> {
+    this.logger.log({ traceID,username, message: `Getting the user [${username}]` })
+
+    const user = await this.dbInstance.get({ Username: username });
+
+    if (!user) {
+      this.logger.warn({ traceID,username, message: `User [${username}] not found` })
+    }
+
+    return user
   }
 
-  async validateUser(username: string, pass: string): Promise<boolean> {
-    const user = await this.findOne(username);
+  async validateUser(username: string, pass: string, traceID: string): Promise<boolean> {
+    const user = await this.findUser(username, traceID);
 
     if (user) {
-      return this.encrypter.validate(pass, user.Password)
+      return this.encrypter.validate(pass, user.Password, traceID)
     }
     return false
   }
 
-  async createTrip(username: string, createTripDTO: createTripDTO): Promise<User> {
+  async createTrip(username: string, createTripDTO: createTripDTO, traceID: string): Promise<User> {
+    this.logger.log({ traceID, username, message: `Creating trip` })
+
     const tripId = uuidv4()
 
     const newTrip: Trip = {
@@ -50,7 +64,7 @@ export class UserService {
       ...createTripDTO
     }
 
-    const user = await this.findOne(username)
+    const user = await this.findUser(username, traceID)
 
     if (!user.Trips) {
       user.Trips = []
@@ -61,17 +75,29 @@ export class UserService {
     return this.dbInstance.update(user);
   }
 
-  async findOneTrip(username, tripId: string): Promise<Trip | undefined> {
-    const user = await this.findOne(username)
+  async findOneTrip(username, tripId: string, traceID: string): Promise<Trip | undefined> {
+    const defaultLog = {
+      traceID,
+      username,
+      tripId,
+    }
+
+    this.logger.log({ ...defaultLog, message: `Finding trip for the user [${username}]` })
+
+    const user = await this.findUser(username, traceID)
 
     if (user.Trips) {
       return user.Trips.find((trip) => trip.TripID === tripId)
     }
-    return undefined
+    this.logger.log({ ...defaultLog, message: `Trip not found` })
+
+    throw new HttpException('Trip not found', HttpStatus.NOT_FOUND)
   }
 
-  async findAllTrips(username: string, origin?: string, destination?: string, date?: string): Promise<Trip[] | undefined> {
-    const user = await this.findOne(username)
+  async findAllTrips(username: string, traceID: string, origin?: string, destination?: string, date?: string): Promise<Trip[] | undefined> {
+    this.logger.log({ traceID, username, message: `Finding all trips for the user [${username}]` })
+
+    const user = await this.findUser(username, traceID)
 
     const filteredTrips = user.Trips && user.Trips.filter((trip) => {
       if (origin && trip.OriginCity !== origin) {
@@ -89,8 +115,19 @@ export class UserService {
     return filteredTrips
   }
 
-  async addPeopleIntoTrip(username: string, tripId: string, updateTripDTO: updateTripDTO) {
-    const user = await this.findOne(username)
+  async addPeopleIntoTrip(username: string, tripId: string, updateTripDTO: updateTripDTO, traceID: string) {
+    const defaultLog = {
+      traceID,
+      username,
+      tripId,
+    }
+
+    this.logger.log({
+      ...defaultLog,
+      message: `Adding people inside Trip[${tripId}] for the user [${username}]`
+    })
+
+    const user = await this.findUser(username, traceID)
 
     if (user.Trips) {
       const trip = user.Trips.find((trip) => trip.TripID === tripId)
@@ -99,11 +136,25 @@ export class UserService {
         trip.People.push(...updateTripDTO.People)
         return this.dbInstance.update(user)
       }
+
+      this.logger.log({ ...defaultLog, message: `Trip not found` })
+      throw new HttpException('Trip not found', HttpStatus.NOT_FOUND)
     }
   }
 
-  async removeTrip(username: string, tripId: string): Promise<Trip[]> {
-    const user = await this.findOne(username)
+  async removeTrip(username: string, tripId: string, traceID: string): Promise<Trip[]> {
+    const defaultLog = {
+      traceID,
+      username,
+      tripId,
+    }
+
+    this.logger.log({
+      ...defaultLog,
+      message: `Removing Trip[${tripId}] for the user [${username}]`
+    })
+
+    const user = await this.findUser(username, traceID)
     if (user && user.Trips) {
       const index = user.Trips.findIndex((trip) => trip.TripID === tripId);
       if (index > -1) {

@@ -1,6 +1,6 @@
 
 import { PassportStrategy } from '@nestjs/passport';
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, Req, UnauthorizedException } from '@nestjs/common';
 
 import { Strategy } from 'passport-local';
 import * as dotenv from 'dotenv';
@@ -15,8 +15,8 @@ export class LocalStrategy extends PassportStrategy(Strategy) {
     super();
   }
 
-  async validate(username: string, password: string): Promise<any> {
-    const user = await this.userService.validateUser(username, password);
+  async validate(username: string, password: string, @Req() req): Promise<any> {
+    const user = await this.userService.validateUser(username, password, req.generatedTraceID);
     if (!user) {
       throw new UnauthorizedException();
     }

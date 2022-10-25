@@ -1,4 +1,4 @@
 export interface EncrypterInterface {
-    encrypt(string: string): Promise<string>
-    validate(string: string, hash: string): Promise<boolean>
+    encrypt(string: string, traceID: string): Promise<string>
+    validate(string: string, hash: string, traceID: string): Promise<boolean>
 }

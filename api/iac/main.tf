@@ -11,15 +11,15 @@ provider "aws" {
   }
 }
 
-resource "aws_dynamodb_table" "tf_trips_table" {
-  name             = "tf-trips-table"
-  hash_key         = "id"
+resource "aws_dynamodb_table" "tf_users_table" {
+  name             = "users"
+  hash_key         = "Username"
   billing_mode = "PROVISIONED"
   read_capacity= "30"
   write_capacity= "30"
 
   attribute {
-    name = "id"
+    name = "Username"
     type = "S"
   }
 }

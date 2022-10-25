@@ -7,8 +7,8 @@ import { UserModule } from './user/user.module';
 import { JwtModule } from '@nestjs/jwt';
 import { UserService } from './user/user.service';
 import { CommonModule } from './common/common.module';
-import { EncrypterBcrypt } from './common/encrypter-bcrypt';
-import { logger } from './common/logger.middleware';
+import { EncrypterBcrypt } from './common/hash/encrypter-bcrypt';
+import { logger } from './common/middlewares/logger.middleware';
 import { UserController } from './user/user.controller';
 
 @Module({

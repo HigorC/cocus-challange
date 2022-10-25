@@ -1,5 +1,5 @@
 import {  Module } from "@nestjs/common";
-import { EncrypterBcrypt } from "./encrypter-bcrypt";
+import { EncrypterBcrypt } from "./hash/encrypter-bcrypt";
 
 @Module({
     providers: [EncrypterBcrypt],

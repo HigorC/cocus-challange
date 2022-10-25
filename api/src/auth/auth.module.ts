@@ -10,7 +10,7 @@ import { JwtStrategy } from './jwt.strategy';
 import * as dotenv from 'dotenv';
 import { UserService } from '../user/user.service';
 import { CommonModule } from '../common/common.module';
-import { EncrypterBcrypt } from '../common/encrypter-bcrypt';
+import { EncrypterBcrypt } from '../common/hash/encrypter-bcrypt';
 
 dotenv.config();
 

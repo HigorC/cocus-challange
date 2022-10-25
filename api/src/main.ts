@@ -7,14 +7,13 @@ import { ValidationPipe } from '@nestjs/common';
 async function bootstrap() {
   dynamoose.aws.ddb.local("http://localhost:4566");
 
-//   const ddb = new dynamoose.aws.ddb.DynamoDB({
-//     "accessKeyId": null,
-//     "secretAccessKey": "SECRET",
-//     "region": "us-east-1"
-// });
-
-// Set DynamoDB instance to the Dynamoose DDB instance
-// dynamoose.aws.ddb.set(ddb);
+  // const ddb = new dynamoose.aws.ddb.DynamoDB({
+  //   credentials: {
+  //     "secretAccessKey": "SECRET",
+  //     "accessKeyId": null,
+  //   },
+  //   "region": "us-east-1"
+  // });
 
   const app = await NestFactory.create(AppModule);
 

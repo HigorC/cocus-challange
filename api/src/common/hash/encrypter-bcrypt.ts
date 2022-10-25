@@ -1,10 +1,10 @@
-import { EncrypterInterface } from "./encrypter.interface";
+import { IEncrypter } from "./encrypter.interface";
 
 import * as bcrypt from 'bcrypt';
 import { Injectable, Logger } from "@nestjs/common";
 
 @Injectable()
-export class EncrypterBcrypt implements EncrypterInterface {
+export class EncrypterBcrypt implements IEncrypter {
     private readonly logger = new Logger(EncrypterBcrypt.name);
     private readonly hashSalts = 10
 

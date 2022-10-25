@@ -5,7 +5,7 @@ import { createUserDTO } from './dto/createUser.dto';
 import { createTripDTO } from './dto/createTrip.dto';
 import { Trip, User } from './user.entity';
 import { updateTripDTO } from './dto/updateTrip.dto';
-import { EncrypterInterface } from '../common/encrypter.interface';
+import { IEncrypter } from '../common/hash/encrypter.interface';
 
 import { v4 as uuidv4 } from 'uuid';
 import * as dynamoose from 'dynamoose'
@@ -16,7 +16,7 @@ export class UserService {
   private dbInstance = dynamoose.model<User>(this.tableName, UserSchema);
   private readonly logger = new Logger(UserService.name);
 
-  constructor(@Inject("EncrypterInterface") private encrypter: EncrypterInterface) { }
+  constructor(@Inject("EncrypterInterface") private encrypter: IEncrypter) { }
 
   /**
    * Creates a new user, if it's doesn't exists.
@@ -48,12 +48,12 @@ export class UserService {
    * @returns user, if founded
    */
   async findUser(username: string, traceID: string): Promise<User> {
-    this.logger.log({ traceID,username, message: `Getting the user [${username}]` })
+    this.logger.log({ traceID, username, message: `Getting the user [${username}]` })
 
     const user = await this.dbInstance.get({ Username: username });
 
     if (!user) {
-      this.logger.warn({ traceID,username, message: `User [${username}] not found` })
+      this.logger.warn({ traceID, username, message: `User [${username}] not found` })
     }
 
     return user
@@ -148,6 +148,8 @@ export class UserService {
 
     const user = await this.findUser(username, traceID)
 
+    if (!user) throw new HttpException(`User [${username}] not found`, HttpStatus.NOT_FOUND)
+
     const filteredTrips = user.Trips && user.Trips.filter((trip) => {
       if (origin && trip.OriginCity !== origin) {
         return false
@@ -192,7 +194,8 @@ export class UserService {
 
       if (trip && trip.People) {
         trip.People.push(...updateTripDTO.People)
-        return this.dbInstance.update(user)
+        await this.dbInstance.update(user)
+        return user.Trips
       }
 
       this.logger.log({ ...defaultLog, message: `Trip not found` })

@@ -4,9 +4,15 @@ import { JwtService } from '@nestjs/jwt';
 import { UserService } from './user.service';
 import { UserController } from './user.controller';
 import { AuthService } from '../auth/auth.service';
+import { CommonModule } from '../common/common.module';
+import { EncrypterBcrypt } from '../common/encrypter-bcrypt';
 
 @Module({
-  providers: [UserService, AuthService, JwtService],
+  imports: [CommonModule],
+  providers: [UserService, AuthService, JwtService, {
+    provide: "EncrypterInterface",
+    useClass: EncrypterBcrypt
+  }],
   exports: [UserService],
   controllers: [UserController],
 })

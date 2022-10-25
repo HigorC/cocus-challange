@@ -9,11 +9,14 @@ import { JwtStrategy } from './jwt.strategy';
 
 import * as dotenv from 'dotenv';
 import { UserService } from '../user/user.service';
+import { CommonModule } from '../common/common.module';
+import { EncrypterBcrypt } from '../common/encrypter-bcrypt';
 
 dotenv.config();
 
 @Module({
   imports: [
+    CommonModule,
     UserModule,
     PassportModule,
     JwtModule.register({
@@ -21,7 +24,14 @@ dotenv.config();
       signOptions: { expiresIn: '60s' },
     }),
   ],
-  providers: [AuthService, LocalStrategy, JwtStrategy, UserService],
+  providers: [
+    AuthService,
+    LocalStrategy,
+    JwtStrategy,
+    UserService, {
+      provide: "EncrypterInterface",
+      useClass: EncrypterBcrypt
+    }],
   exports: [AuthService],
 })
 export class AuthModule { }

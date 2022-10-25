@@ -6,8 +6,12 @@ import { LocalStrategy } from './auth/local.strategy';
 import { UserModule } from './user/user.module';
 import { JwtModule } from '@nestjs/jwt';
 import { UserService } from './user/user.service';
+import { CommonModule } from './common/common.module';
+import { EncrypterBcrypt } from './common/encrypter-bcrypt';
+
 @Module({
   imports: [
+    CommonModule,
     UserModule,
     AuthModule,
     JwtModule.register({
@@ -15,6 +19,15 @@ import { UserService } from './user/user.service';
       signOptions: { expiresIn: '60s' },
     }),
   ],
-  providers: [JwtStrategy, LocalStrategy, AuthService, UserService]
+  providers: [
+    JwtStrategy,
+    LocalStrategy,
+    AuthService,
+    UserService,
+    {
+      provide: "EncrypterInterface",
+      useClass: EncrypterBcrypt
+    }
+  ]
 })
 export class AppModule { }

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 
 import { Model } from 'dynamoose/dist/Model';
 import { UserSchema } from './user.schema';
@@ -8,22 +8,20 @@ import { Trip, User } from './user.entity';
 import { updateTripDTO } from './dto/updateTrip.dto';
 
 import { v4 as uuidv4 } from 'uuid';
-import * as bcrypt from 'bcrypt';
 import * as dynamoose from 'dynamoose'
+import { EncrypterInterface } from '../common/encrypter.interface';
 
-// export type User = any;
 @Injectable()
 export class UserService {
   private dbInstance: Model<User>;
-  private readonly hashSalts = 10
 
-  constructor() {
+  constructor(@Inject("EncrypterInterface") private encrypter: EncrypterInterface) {
     const tableName = 'users';
     this.dbInstance = dynamoose.model<User>(tableName, UserSchema);
   }
 
   async create(createUserDTO: createUserDTO) {
-    const hash = await bcrypt.hash(createUserDTO.Password, this.hashSalts);
+    const hash  = await this.encrypter.encrypt(createUserDTO.Password)
 
     return this.dbInstance.create({
       Username: createUserDTO.Username,
@@ -39,7 +37,7 @@ export class UserService {
     const user = await this.findOne(username);
 
     if (user) {
-      return bcrypt.compare(pass, user.Password)
+      return this.encrypter.validate(pass, user.Password)
     }
     return false
   }
@@ -81,7 +79,7 @@ export class UserService {
       }
       if (destination && trip.DestinationCity !== destination) {
         return false
-      } 
+      }
       if (date && trip.Date !== date) {
         return false
       }

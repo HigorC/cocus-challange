@@ -1,30 +1,4 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
-
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
-  
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master" target="_blank"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#9" alt="Coverage" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
-
-## Description
-
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+# Cocus PT Challenge
 
 ## Installation
 
@@ -34,40 +8,83 @@ $ npm install
 
 ## Running the app
 
+Starts the localstack service, to use AWS locally.
+
 ```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+$ docker-compose up
 ```
+
+Start the NestJS application.
+
+```bash
+$ npm run start
+```
+
+## How to use the API:
+
+The first step is to create a user, sending a POST with a payload with username and password to `/users`.
+
+```bash
+curl --request POST \
+  --url http://localhost:3000/users \
+  --header 'Content-Type: application/json' \
+  --data '{
+	"Username": "batman",
+	"Password": "iloveclows"
+       }'
+```
+
+With the user created, you need to login. Then POST to /users/auth/login by sending a payload with username and password.
+
+```bash
+curl --request POST \
+  --url http://localhost:3000/users/auth/login \
+  --header 'Content-Type: application/json' \
+  --data '{
+	"Username": "batman",
+	"Password": "iloveclows"
+}'
+```
+A JWT Token will be returned if all goes well. This Token must be used in all subsequent interactions with the API.
+
+A list of all implemented routes is avaiable in `http://localhost:3000/api`:
+
+
 
 ## Test
 
 ```bash
-# unit tests
-$ npm run test
-
-# e2e tests
 $ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
 ```
 
-## Support
+## Deploy
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+```bash
+$ terraform apply
+```
 
-## Stay in touch
+## Backlog
+Because of the time available to me, I had to make some technological/architectural choices that I know are not the best, but were the most viable, such as implementing only e2e tests - not ideal in a real project, but they cover my routes and test what I need.
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
 
-## License
+The points I noticed that need improvement and/or need to be implemented:
 
-  Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+__To be implemented__
+
+- Front-end 
+ The routes for creating a user and logging in exist and work fine. Therefore, in front-ent, after creating a user, it would be enough to make a request to `users/auth/login` and save the returned JWT token in `sessionStorage` or `localStorage`. This token must be used in all subsequent requests to the API.
+
+
+ - Deploy
+ I tested the terraform deploy only in localstack and not in a real AWS environment, so I have some code snippets in the project like the local DynamoDB URL in the `.tf` and `main.ts` file that should be dynamic, given a .env file.
+
+ __Improvement__
+
+- `Logger` could be an interface with a class that implements its usage, just like I did with `EncrypterBcrypt`.
+
+- In the tests, I'm using a hardcoded JWT token, the correct thing would be to find a way to mock the request that returns the token.
+
+- Authorization through Guards is working, but for some reason, when trying to access a resource with someone else's token, despite the content not being returned (correct), the API returns status 200 (wrong).
+
+- I did the basic implementation of swagger, just to show all my routes, but as the automatic inference dont work very well, the routes dont show the parameters and responses. The controller needs to be decorated with some specifc decorators from nest to improve the docs, or the entire document can be write whitout the swagger plugin, to avoid controller pollution.
+ 

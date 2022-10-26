@@ -1,10 +1,11 @@
 import { Controller, Request, Post, UseGuards, Body, Get, Param, Put, Delete, HttpException, HttpStatus, Query, Res, Req } from '@nestjs/common';
-
+import {ApiResponse} from '@nestjs/swagger';
 import { AuthService } from '../auth/auth.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { LocalAuthGuard } from '../auth/local-auth.guard';
 import { createTripDTO } from './dto/createTrip.dto';
 import { updateTripDTO } from './dto/updateTrip.dto';
+import { Trip } from './user.entity';
 import { UserService } from './user.service';
 
 @Controller('users')
@@ -56,7 +57,7 @@ export class UserController {
     @Query('origin') origin,
     @Query('destination') destination,
     @Query('date') date,
-  ): Promise<Object> {
+  ): Promise<Trip[]> {
     return this.userService.findAllTrips(params.userId, req.generatedTraceID, origin, destination, date)
   }
 

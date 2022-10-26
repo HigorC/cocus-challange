@@ -49,7 +49,7 @@ A JWT Token will be returned if all goes well. This Token must be used in all su
 
 A list of all implemented routes is avaiable in `http://localhost:3000/api`:
 
-
+![image](https://user-images.githubusercontent.com/19439336/198077839-89fe9623-6043-405a-b2d1-29c92fd2eead.png)
 
 ## Test
 
